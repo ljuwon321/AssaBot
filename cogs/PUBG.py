@@ -186,21 +186,37 @@ class PUBG():
         else:
             grade = player_stats.get("grade")
             avg_dmg = round(player_stats.get("stats").get("damage_dealt_avg"), 2)
+            avg_suv_raw = int(player_stats.get("stats").get("time_survived_avg"))
+            avg_suv = '{0}분 {1}초'.format(avg_suv_raw//60, avg_suv_raw-((avg_suv_raw//60)*60))
+            avg_ranks = '#{}'.format(round(player_stats.get('stats').get('rank_avg'), 1))
             region = regions.get(data.get('region'))
             mode = data.get('mode').upper()
             r_points = player_stats.get('stats').get('rank_points')
+            r_ranks = player_stats.get('ranks').get('rank_points')
+            r_ranks_per = round((r_ranks/player_stats.get('max_ranks').get('rank_points'))*100, 2)
             tier = player_stats.get('tier').get('title')
+            tier = tier.replace('Beginner', '초심').replace('Novice', '견습').replace('Experienced', '경험').replace('Skilled', '숙련').replace('Specialist', '전문').replace('Expert', '전문가').replace('Survivor', '생존자').replace('Lone survivor', '유일한 생존자')
+            
             embed = discord.Embed(title=data['nickname'], url=f'https://pubg.op.gg/user/{data.get("nickname")}?server={data.get("region")}',
-                                  description=f'{region}-{mode}\n랭크 포인트: **{r_points}**\n평균 딜량: **{avg_dmg}**\n랭크: **{tier}**', color=0x00ff00)
-            embed.add_field(name="랭크 순위", value='{0}위(상위 {1}%)'.format(player_stats['ranks']['rank_points'], round((player_stats['ranks']['rank_points']/player_stats['max_ranks']['rank_points'])*100, 2)), inline=True)
-            embed.add_field(name="치킨", value='{}마리'.format(player_stats['stats']['win_matches_cnt']), inline=True)
-            embed.add_field(name="승률", value='{}%'.format(round(player_stats['stats']['win_matches_cnt']/player_stats['stats']['matches_cnt']*100, 2), inline=True))
+                                  description=f'{region}-{mode}\n랭크 포인트: **{r_points}**\n랭크 순위: **{r_ranks}위(상위 {r_ranks_per}%)**\n랭크: **{tier}**', color=0x00ff00)
+            embed.add_field(name="승률", value='{}%'.format(round(player_stats['stats']['win_matches_cnt']/player_stats['stats']['matches_cnt']*100, 2), inline=True))   
+            embed.add_field(name="누적 치킨", value='{}마리'.format(player_stats['stats']['win_matches_cnt']), inline=True)
             embed.add_field(name="누적 TOP 10(확률%)", value='{0}회({1}%)'.format(player_stats['stats']['topten_matches_cnt'], round((player_stats['stats']['topten_matches_cnt']/player_stats['stats']['matches_cnt'])*100, 2)), inline=True)
+            embed.add_field(name="평균 딜량", value=avg_dmg, inline=True)
+            embed.add_field(name="평균 생존시간", value=avg_suv, inline=True)
+            embed.add_field(name="평균 등수", value=avg_ranks, inline=True)
+            
             embed.add_field(name='누적 킬', value='{}킬'.format(player_stats['stats']['kills_sum']), inline=True)
+            embed.add_field(name='최다 킬', value='{}킬'.format(player_stats['stats']['kills_max']), inline=True)
+            
+            
             if player_stats['stats']['deaths_sum'] is 0:
                 embed.add_field(name="K/D", value=player_stats['stats']['kills_sum'], inline=True)
+                embed.add_field(name="KDA", value=player_stats['stats']['kills_sum'] + player_stats['stats']['assists_sum'], inline=True)
             else:
-                embed.add_field(name="K/D", value=round(player_stats['stats']['kills_sum']/player_stats['stats']['deaths_sum'], 2), inline=True)
+                embed.add_field(name="K/D", value=round(player_stats['stats']['kills_sum'] / player_stats['stats']['deaths_sum'], 2), inline=True)
+                embed.add_field(name="KDA", value=round((player_stats['stats']['kills_sum'] + player_stats['stats']['assists_sum']) / player_stats['stats']['deaths_sum'], 2), inline=True)
+
             embed.set_footer(text='시즌: '+data['season'])
             embed.set_thumbnail(url=player_stats.get('tier').get('image_url'))
             await ctx.send(embed=embed)
